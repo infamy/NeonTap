@@ -99,7 +99,7 @@ fn main() -> ! {
     let mut bytes_on_line: u8 = 0;
     
     // LED state for data indication
-    let mut led_counter = 0u16;
+    let mut led_pulse_counter = 0u16;
 
     loop {
         if usb_dev.poll(&mut [&mut cdc0, &mut cdc1]) {
@@ -147,9 +147,11 @@ fn main() -> ! {
                     let data = &buf[..count];
                     let _ = uart.write_full_blocking(data);
                     
-                    // Blink LED for data activity
-                    led_pin.set_high().unwrap();
-                    led_counter = 500; // Keep LED on for ~500 polls
+                    // Pulse LED for data activity (only if currently off)
+                    if led_pulse_counter == 0 {
+                        led_pulse_counter = 300; // Keep LED on for ~300 polls
+                        led_pin.set_high().unwrap();
+                    }
                     
                     // Output to debug with grouping logic
                     for &byte in data {
@@ -188,9 +190,11 @@ fn main() -> ! {
                 if let Ok(1) = uart.read_raw(&mut byte_buf) {
                     let _ = cdc0.write(&byte_buf);
                     
-                    // Blink LED for data activity
-                    led_pin.set_high().unwrap();
-                    led_counter = 500; // Keep LED on for ~500 polls
+                    // Pulse LED for data activity (only if currently off)
+                    if led_pulse_counter == 0 {
+                        led_pulse_counter = 300; // Keep LED on for ~300 polls
+                        led_pin.set_high().unwrap();
+                    }
                     
                     // Output to debug with grouping logic
                     let byte = byte_buf[0];
@@ -231,13 +235,13 @@ fn main() -> ! {
                     // discard any input
                 }
             }
-            
-            // --- LED management ---
-            if led_counter > 0 {
-                led_counter -= 1;
-            } else {
-                led_pin.set_low().unwrap();
-            }
+        }
+        
+        // --- LED management (outside USB poll to always run) ---
+        if led_pulse_counter > 0 {
+            led_pulse_counter -= 1;
+        } else {
+            led_pin.set_low().unwrap();
         }
     }
 }
