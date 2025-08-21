@@ -19,6 +19,9 @@ jobs:
         with:
           targets: thumbv6m-none-eabi
 
+      - name: Install flip-link
+        run: cargo install flip-link
+
       - name: Install picotool (prebuilt binary)
         run: |
           # Download the latest picotool for Linux x86_64
