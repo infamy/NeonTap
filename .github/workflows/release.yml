@@ -21,12 +21,15 @@ jobs:
 
       - name: Install picotool (prebuilt binary)
         run: |
-          # Download the latest picotool .deb file
-          DEB_URL=$(curl -s https://api.github.com/repos/raspberrypi/picotool/releases/latest | grep "browser_download_url.*amd64.deb" | cut -d '"' -f 4)
-          wget -O picotool.deb "$DEB_URL"
+          # Download the latest picotool for Linux x86_64
+          TAR_URL=$(curl -s https://api.github.com/repos/raspberrypi/pico-sdk-tools/releases/latest | jq -r '.assets[] | select(.name | contains("picotool") and contains("x86_64-lin.tar.gz")) | .browser_download_url')
+          echo "Download URL: $TAR_URL"
+          wget -O picotool.tar.gz "$TAR_URL"
           
-          # Install the downloaded .deb file
-          sudo apt-get install -y ./picotool.deb
+          # Extract and install picotool
+          tar -xzf picotool.tar.gz
+          sudo cp picotool /usr/local/bin/
+          sudo chmod +x /usr/local/bin/picotool
           
           # Verify installation
           picotool version
