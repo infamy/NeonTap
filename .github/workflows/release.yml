@@ -1,0 +1,46 @@
+# .github/workflows/release.yml
+name: Release UF2 (picotool)
+
+on:
+  push:
+    tags:
+      - "*"   # only run on tags
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable) with RP2040 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv6m-none-eabi
+
+      - name: Install picotool (Ubuntu package)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y picotool
+          picotool version
+
+      - name: Build firmware (release)
+        run: cargo build --release --target thumbv6m-none-eabi
+
+      - name: Convert ELF → UF2 with picotool
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          ELF_FILE="target/thumbv6m-none-eabi/release/neontap"
+          UF2_FILE="neontap_${TAG_NAME}.uf2"
+          picotool uf2 convert "$ELF_FILE" -t elf "$UF2_FILE"
+          echo "UF2_FILE=$UF2_FILE" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.UF2_FILE }}
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
