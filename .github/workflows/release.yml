@@ -28,7 +28,7 @@ jobs:
           
           # Extract and install picotool
           tar -xzf picotool.tar.gz
-          sudo cp picotool /usr/local/bin/
+          sudo cp picotool/picotool /usr/local/bin/
           sudo chmod +x /usr/local/bin/picotool
           
           # Verify installation
