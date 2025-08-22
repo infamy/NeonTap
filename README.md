@@ -7,23 +7,58 @@
 ```
 # NeonTap
 
-A USB-to-UART bridge with sniffing build in.
+A USB-to-UART bridge with sniffing built in. Supports both Raspberry Pi Pico and SeeedStudio XIAO RP2040.
 
 ## Features
 
+- **Dual Board Support**: Works with Raspberry Pi Pico and SeeedStudio XIAO RP2040
 - **Dynamic Baudrate**: Automatically adjusts UART baudrate based on CDC0 settings
 - **Dual CDC Ports**: Two USB serial ports for control and monitoring
 - **Hexdump Output**: Source identification with hex/ASCII formatted monitoring
 - **Real-time Analysis**: Live monitoring of bidirectional serial communications
 
+## Supported Boards
+
+### Raspberry Pi Pico
+- **UART Pins**: GPIO0 (TX), GPIO1 (RX)
+- **LED**: Built-in LED for data activity indication
+- **Build**: `cargo build --features pico`
+
+### SeeedStudio XIAO RP2040
+- **UART Pins**: GPIO0 (TX), GPIO1 (RX)
+- **LED**: Built-in LED for data activity indication
+- **Build**: `cargo build --features xiao`
+
 ## Hardware Setup
 
-**Connections:**
+**Connections (both boards):**
 
 - **GPIO0**: UART TX → Target device RX
 - **GPIO1**: UART RX → Target device TX
 - **GND**: Common ground
 - **USB**: Connect to PC
+
+## Building
+
+### For Raspberry Pi Pico
+```bash
+cargo build --release --features pico
+```
+
+### For SeeedStudio XIAO RP2040
+```bash
+cargo build --release --features xiao
+```
+
+### Generate UF2 Files
+```bash
+# Generate both UF2 files
+./generate_uf2.sh
+
+# Generate specific UF2 file
+./generate_uf2.sh pico
+./generate_uf2.sh xiao
+```
 
 ## Usage
 
@@ -63,3 +98,34 @@ The NeonTap enumerates as two USB CDC serial ports:
 2. Change the baudrate setting (9600, 115200, etc.)
 3. The physical UART automatically reconfigures
 4. CDC1 shows: `[INFO] Baudrate changed to XXXXX bps`
+
+## Flashing
+
+### Raspberry Pi Pico
+1. Hold BOOTSEL button while connecting USB
+2. Drag and drop `neontap_pico.uf2` to the RPI-RP2 mass storage device
+
+### SeeedStudio XIAO RP2040
+1. Double-click the reset button to enter bootloader mode
+2. Drag and drop `neontap_xiao.uf2` to the XIAO mass storage device
+
+## Development
+
+### Adding New Boards
+
+To add support for a new RP2040-based board:
+
+1. Add the board's BSP to `Cargo.toml` as an optional dependency
+2. Add a new feature in the `[features]` section
+3. Add conditional compilation blocks in `src/main.rs` for the new board
+4. Update pin mappings and LED configuration as needed
+5. Update the build script to handle the new binary name
+
+### Example for a new board:
+```rust
+#[cfg(feature = "newboard")]
+use newboard_bsp::hal;
+// ... add pin configuration
+#[cfg(feature = "newboard")]
+let pins = newboard_bsp::Pins::new(/* ... */);
+```

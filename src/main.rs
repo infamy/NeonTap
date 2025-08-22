@@ -5,11 +5,27 @@
 use cortex_m_rt::entry;
 use panic_halt as _;
 
+#[cfg(feature = "pico")]
 use rp_pico::hal;
+#[cfg(feature = "pico")]
 use rp_pico::hal::pac;
+#[cfg(feature = "pico")]
 use rp_pico::XOSC_CRYSTAL_FREQ;
+#[cfg(feature = "pico")]
 use rp_pico::hal::Clock;
+#[cfg(feature = "pico")]
 use rp_pico::hal::fugit::RateExtU32;
+
+#[cfg(feature = "xiao")]
+use seeeduino_xiao_rp2040::hal;
+#[cfg(feature = "xiao")]
+use seeeduino_xiao_rp2040::hal::pac;
+#[cfg(feature = "xiao")]
+use seeeduino_xiao_rp2040::XOSC_CRYSTAL_FREQ;
+#[cfg(feature = "xiao")]
+use seeeduino_xiao_rp2040::hal::Clock;
+#[cfg(feature = "xiao")]
+use seeeduino_xiao_rp2040::hal::fugit::RateExtU32;
 
 use usb_device::prelude::*;
 use usb_device::class_prelude::*;
@@ -46,18 +62,39 @@ fn main() -> ! {
     ).ok().unwrap();
 
     let sio = hal::Sio::new(pac.SIO);
+    
+    // Board-specific pin configuration
+    #[cfg(feature = "pico")]
     let pins = rp_pico::Pins::new(
+        pac.IO_BANK0, pac.PADS_BANK0, sio.gpio_bank0,
+        &mut pac.RESETS,
+    );
+    
+    #[cfg(feature = "xiao")]
+    let pins = seeeduino_xiao_rp2040::Pins::new(
         pac.IO_BANK0, pac.PADS_BANK0, sio.gpio_bank0,
         &mut pac.RESETS,
     );
 
     // Setup onboard LED for data indication
+    #[cfg(feature = "pico")]
     let mut led_pin = pins.led.into_push_pull_output();
+    
+    #[cfg(feature = "xiao")]
+    let mut led_pin = pins.led_blue.into_push_pull_output();
 
     // ---- Hardware UART0 ----
+    // Board-specific UART pin mapping
+    #[cfg(feature = "pico")]
     let uart_pins = (
         pins.gpio0.into_function::<hal::gpio::FunctionUart>(), // TX
         pins.gpio1.into_function::<hal::gpio::FunctionUart>(), // RX
+    );
+    
+    #[cfg(feature = "xiao")]
+    let uart_pins = (
+        pins.tx.into_function::<hal::gpio::FunctionUart>(), // TX
+        pins.rx.into_function::<hal::gpio::FunctionUart>(), // RX
     );
     
     // Store UART configuration for easy recreation
@@ -227,8 +264,6 @@ fn main() -> ! {
                 }
             }
 
-
-            
             // --- Ignore anything typed into CDC1 ---
             if let Ok(count) = cdc1.read(&mut buf) {
                 if count > 0 {

@@ -37,21 +37,34 @@ jobs:
           # Verify installation
           picotool version
 
-      - name: Build firmware (release)
-        run: cargo build --release --target thumbv6m-none-eabi
+      - name: Build Pico firmware (release)
+        run: cargo build --release --target thumbv6m-none-eabi --features pico
 
-      - name: Convert ELF → UF2 with picotool
+      - name: Build XIAO firmware (release)
+        run: cargo build --release --target thumbv6m-none-eabi --features xiao
+
+      - name: Convert ELF → UF2 for Pico
         run: |
           TAG_NAME="${GITHUB_REF#refs/tags/}"
-          ELF_FILE="target/thumbv6m-none-eabi/release/neontap"
-          UF2_FILE="neontap_${TAG_NAME}.uf2"
+          ELF_FILE="target/thumbv6m-none-eabi/release/neontap_pico"
+          UF2_FILE="neontap_pico_${TAG_NAME}.uf2"
           picotool uf2 convert "$ELF_FILE" -t elf "$UF2_FILE"
-          echo "UF2_FILE=$UF2_FILE" >> $GITHUB_ENV
+          echo "PICO_UF2_FILE=$UF2_FILE" >> $GITHUB_ENV
+
+      - name: Convert ELF → UF2 for XIAO
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          ELF_FILE="target/thumbv6m-none-eabi/release/neontap_xiao"
+          UF2_FILE="neontap_xiao_${TAG_NAME}.uf2"
+          picotool uf2 convert "$ELF_FILE" -t elf "$UF2_FILE"
+          echo "XIAO_UF2_FILE=$UF2_FILE" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.UF2_FILE }}
+          files: |
+            ${{ env.PICO_UF2_FILE }}
+            ${{ env.XIAO_UF2_FILE }}
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
         env:

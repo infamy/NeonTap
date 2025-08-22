@@ -13,19 +13,34 @@ defmt = "1"
 defmt-rtt = "1"
 panic-probe = { version = "1", features = ["print-defmt"] }
 
-# We're using a Pico by default on this template
-rp-pico = "0.9"
+# Board Support Packages - only one should be active
+rp-pico = { version = "0.9", optional = true }
+seeeduino-xiao-rp2040 = { version = "0.6.0", optional = true }
 
 usbd-serial = "0.2"
 usb-device = "0.3"
 panic-halt = "0.2"
 
-# but you can use any BSP. Uncomment this to use the pro_micro_rp2040 BSP instead
-# sparkfun-pro-micro-rp2040 = "0.8"
+[features]
+# default = ["pico"]
+pico = ["rp-pico"]
+xiao = ["seeeduino-xiao-rp2040"]
 
-# If you're not going to use a Board Support Package you'll need these:
-# rp2040-hal = { version="0.10", features=["rt", "critical-section-impl"] }
-# rp2040-boot2 = "0.3"
+# Ensure only one board feature is active
+[package.metadata.docs.rs]
+all-features = false
+default-features = ["pico"]
+
+# Binary configurations for different boards
+[[bin]]
+name = "neontap_pico"
+path = "src/main.rs"
+required-features = ["pico"]
+
+[[bin]]
+name = "neontap_xiao"
+path = "src/main.rs"
+required-features = ["xiao"]
 
 # cargo build/run
 [profile.dev]
