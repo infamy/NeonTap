@@ -32,4 +32,18 @@ fn main() {
     // `memory.x` is changed.
     println!("cargo:rerun-if-changed=memory.x");
 
+    // Set binary name based on features
+    let features: Vec<String> = env::vars()
+        .filter(|(key, _)| key.starts_with("CARGO_FEATURE_"))
+        .map(|(key, _)| key.replace("CARGO_FEATURE_", "").to_lowercase())
+        .collect();
+
+    if features.contains(&"pico".to_string()) {
+        println!("cargo:rustc-env=CARGO_BIN_NAME=neontap_pico");
+    } else if features.contains(&"xiao".to_string()) {
+        println!("cargo:rustc-env=CARGO_BIN_NAME=neontap_xiao");
+    } else {
+        // Default fallback
+        println!("cargo:rustc-env=CARGO_BIN_NAME=neontap");
+    }
 }
