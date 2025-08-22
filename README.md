@@ -11,10 +11,10 @@ A USB-to-UART bridge with sniffing build in.
 
 ## Features
 
-- **Dynamic Baudrate**: Automatically adjusts UART baudrate based on CDC0 settings
 - **Dual CDC Ports**: Two USB serial ports for control and monitoring
 - **Hexdump Output**: Source identification with hex/ASCII formatted monitoring
 - **Real-time Analysis**: Live monitoring of bidirectional serial communications
+- **Dynamic Baudrate**: Automatically adjusts UART baudrate based on CDC0 settings
 
 ## Hardware Setup
 
